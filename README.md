@@ -26,3 +26,9 @@ git clone git@github.com:LearningOS/uCore-Tutorial-Test.git user
 ```
 
 注意：`user` 已添加至 `.gitignore`，你无需将其提交，ci 也不会使用它
+
+## 实验过程记录
+
+本分支包含 `course.py` 及完整运行依赖。可直接在仓库根目录运行 `python3 course.py`，初始化 AI 会话归档、安装记录工具并打开实验工作区。仅安装、不打开编辑器时运行 `python3 course.py install --skip-extension`。
+
+安装后可使用 `python3 course.py status` 或 `git course status` 检查状态；切换章节会保留已有配置和过程记录。使用说明见 [实验过程记录说明](docs/course-recording.md)。
