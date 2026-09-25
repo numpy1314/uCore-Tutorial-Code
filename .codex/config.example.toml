@@ -1,0 +1,6 @@
+# Installed at user scope, enabled only for this trusted project.
+[features]
+hooks = true
+
+[plugins."ucore-session-archive@ucore-tutorial-code"]
+enabled = true
