@@ -22,3 +22,23 @@ nfs/fs
 !/.ai/events/**
 !/.ai/submissions/
 !/.ai/submissions/**
+
+# Local recording runtime and client configuration.
+__pycache__/
+*.py[cod]
+/.ai/course-tools/
+/.ai/ide/
+/.opencode/session-archive.json
+/.opencode/ucore-hooks/
+/.opencode/plugins/ucore-session-archive.js
+
+# >>> course-tool records
+!/.ai/
+!/.ai/.gitignore
+!/.ai/agent-sessions/
+!/.ai/agent-sessions/**
+!/.ai/events/
+!/.ai/events/**
+!/.ai/submissions/
+!/.ai/submissions/**
+# <<< course-tool records
