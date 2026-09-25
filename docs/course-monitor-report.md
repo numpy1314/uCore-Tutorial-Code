@@ -72,3 +72,14 @@ Agent CLI 的安装、课程 Codex 调用和归档事件通过模拟客户端与
 实验内核的构建与测试由章节自己的流程负责。
 
 使用方法见 [实验过程记录](course-recording.md) 和 [AI 会话归档](agent-session-archive.md)。
+
+
+## 2026-09-25 工具同步
+
+本仓库在 `main` 分发同步自 [leeehh/course-tool](https://github.com/leeehh/course-tool) 的工具，版本 `6d68289f601a76b51f33efed3ad13198ae57a579`。
+在本仓库运行 `python3 course.py` 仍会安装到本仓库；也可用 `--project` 指定其他 Git 项目。
+安装后的 `git course` 和 `git agent-plugins` 使用 `.ai/course-tools/`，可跨全部章节分支运行。
+升级时先在 `main` 拉取更新，再运行 `python3 course.py`（或指定 `--agent`）；原记录和配置会保留。
+插件仍使用原有 `ucore-session-archive@ucore-tutorial-code` 标识，避免已有配置另起一套插件。
+
+本次同步增加 OpenCode 归档、外部项目安装及记录忽略规则迁移。保留实验源码、运行验收脚本和现有记录。

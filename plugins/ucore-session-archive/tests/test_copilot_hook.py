@@ -375,7 +375,7 @@ class CopilotSetupTests(unittest.TestCase):
             root = Path(temp)
             chapter_settings = root / ".vscode/settings.json"
             chapter_settings.parent.mkdir()
-            chapter_text = '{\n// chapter C preferences\n"C_Cpp.default.cStandard":"c11"\n}\n'
+            chapter_text = '{\n// chapter Rust preferences\n"rust-analyzer.cargo.target":"riscv64gc-unknown-none-elf"\n}\n'
             chapter_settings.write_text(chapter_text)
             copilot.install_hooks(root)
             settings = (root / ".ai/ide/course.code-workspace").read_bytes()

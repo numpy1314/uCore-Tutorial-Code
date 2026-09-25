@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Single repository entry point for course recording; Python 3.10+."""
+"""Reusable course recording entry point; Python 3.10+."""
 import argparse
 import json
 import os
@@ -12,7 +12,7 @@ import time
 
 BUNDLE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(BUNDLE / 'scripts'))
-from course_runtime import HOOKS_PATH, install_runtime, project_root
+from course_runtime import HOOKS_PATH, install_runtime, project_root, resolve_project
 
 ROOT = project_root(BUNDLE)
 MONITOR = BUNDLE / '.course-monitor'
@@ -28,8 +28,8 @@ def git(*args, optional=False):
 
 def check_repository():
     if pathlib.Path(git('rev-parse', '--show-toplevel')).resolve() != ROOT:
-        raise RuntimeError('course.py must be placed at the Git repository root.')
-    for name in ['.ai', '.ai/course-tools', '.ai/events', '.ai/ide', '.ai/submissions']:
+        raise RuntimeError('--project must identify a Git checkout.')
+    for name in ['.ai', '.ai/course-tools', '.ai/agent-sessions', '.ai/events', '.ai/ide', '.ai/submissions']:
         path = ROOT / name
         if path.resolve() != path.absolute():
             raise RuntimeError('Refusing symlink in recording path: ' + name)
@@ -126,12 +126,18 @@ def logs():
         time.sleep(0.5)
 
 def main():
-    parser=argparse.ArgumentParser(description='仓库内的课程记录入口；不带参数时先初始化 AI 归档，再安装并打开实验与实时日志。')
+    global ROOT, MONITOR, VSIX
+    parser=argparse.ArgumentParser(description='为指定 Git 项目配置课程记录；默认先初始化 AI 归档，再安装并打开实验与实时日志。')
     parser.add_argument('action',nargs='?',default='start',choices=['start','install','logs','status','codex','export'])
-    parser.add_argument('--agent',default='auto',choices=['auto','codex','claude','cursor','vscode','copilot','all'],help='启动时初始化的 AI 归档客户端；默认 auto 自动检测')
+    parser.add_argument('--project',help='目标 Git 项目目录；从项目内调用时自动识别，安装后的入口默认使用所属项目')
+    parser.add_argument('--agent',default='auto',choices=['auto','codex','claude','cursor','vscode','copilot','opencode','all'],help='启动时初始化的 AI 归档客户端；默认 auto 自动检测')
     parser.add_argument('--skip-extension',action='store_true',help='仅安装项目 hooks；供容器初始化或已单独安装扩展时使用')
     parser.add_argument('--allow-edits',action='store_true',help='Codex 使用 workspace-write 沙箱；默认只读')
     args=parser.parse_args()
+    ROOT=resolve_project(BUNDLE,args.project)
+    runtime_monitor=ROOT/'.ai/course-tools/.course-monitor'
+    MONITOR=runtime_monitor if (runtime_monitor/'config.json').is_file() else BUNDLE/'.course-monitor'
+    VSIX=MONITOR/'rewind-ide-0.3.1.vsix'
     if args.action in ['start','install'] and pathlib.Path('/.dockerenv').exists():
         # A Windows bind mount can have a different owner in Docker. Scope this
         # exception to this explicitly selected repository inside the container.
@@ -139,8 +145,10 @@ def main():
         if str(ROOT) not in safe.stdout.splitlines():
             subprocess.run(['git','config','--global','--add','safe.directory',str(ROOT)],check=True)
     check_repository()
+    if args.action not in ['start','install'] and MONITOR != runtime_monitor:
+        raise RuntimeError('目标项目尚未安装记录工具，请先运行 course.py install --project <项目目录>。')
     if args.action=='start':
-        subprocess.run(['bash',str(BUNDLE/'scripts/setup-agent-plugins.sh'),args.agent],cwd=ROOT,check=True)
+        subprocess.run(['bash',str(BUNDLE/'scripts/setup-agent-plugins.sh'),args.agent,'--project',str(ROOT)],cwd=ROOT,check=True)
     if args.action in ['start','install']:
         install(args.skip_extension)
         if args.action=='start': open_workspace();logs()

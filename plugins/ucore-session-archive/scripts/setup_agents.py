@@ -14,19 +14,20 @@ from pathlib import Path
 
 BUNDLE_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(BUNDLE_ROOT / 'scripts'))
-from course_runtime import RUNTIME_PATH, install_runtime, project_root
+from course_runtime import RUNTIME_PATH, install_runtime, resolve_project
 
 from archive_session import CONFIG_RELATIVE_PATHS, SUPPORTED_MODES
 from archive_storage import atomic_write
 from copilot_hook import install_hooks as install_copilot_hooks
 from cursor_hook import install_hooks as install_cursor_hooks
+from opencode_hook import install_hooks as install_opencode_hooks
 
 
 PLUGIN_NAME = "ucore-session-archive"
 MARKETPLACE_NAME = "ucore-tutorial-code"
 PLUGIN_ID = f"{PLUGIN_NAME}@{MARKETPLACE_NAME}"
-AGENTS = {"codex": "codex", "claude": "claude-code", "cursor": "cursor", "vscode": "vscode-copilot"}
-LABELS = {"codex": "Codex", "claude": "Claude Code", "cursor": "Cursor", "vscode": "VS Code Copilot"}
+AGENTS = {"codex": "codex", "claude": "claude-code", "cursor": "cursor", "vscode": "vscode-copilot", "opencode": "opencode"}
+LABELS = {"codex": "Codex", "claude": "Claude Code", "cursor": "Cursor", "vscode": "VS Code Copilot", "opencode": "OpenCode"}
 
 
 def colored(text, color, stream=None):
@@ -45,7 +46,7 @@ class Progress:
         self.completed = []
 
     def header(self, root, target):
-        print(colored("\nuCore · AI 过程记录配置", "1;36"), flush=True)
+        print(colored("\nCourse Tool · AI 过程记录配置", "1;36"), flush=True)
         self.info(f"项目：{root}")
         self.info(f"目标：{target}")
 
@@ -82,10 +83,11 @@ class Progress:
         self.info("归档位置：.ai/agent-sessions/<agent>/<日期时间>_<session-id>.jsonl")
         for agent in agents:
             hint = {
-                "codex": "Codex：从本项目打开新会话，在 /hooks 确认 Stop、SessionEnd 均已启用并信任；更新后可能需要重新审阅。",
+                "codex": "Codex：在目标项目运行 codex，通过 /hooks 信任归档插件。",
                 "claude": "Claude Code：从本项目重新启动，或在已有会话执行 /reload-plugins。",
                 "cursor": "Cursor：打开本项目并重新加载窗口，在 Output → Hooks 查看执行情况。",
                 "vscode": "VS Code Copilot：打开 .ai/ide/course.code-workspace，在 Output → Copilot Chat Hooks 查看执行情况。",
+                "opencode": "OpenCode：在目标项目重新启动，会自动加载本地归档插件。",
             }[agent]
             self.info(hint)
         self.info("切换实验分支后仍会归档；使用 git agent-plugins 可再次配置。")
@@ -269,7 +271,8 @@ def install_claude(root, progress=None):
 def select_agents(target, progress=None):
     if target == "auto":
         binaries = {"codex": ("codex",), "claude": ("claude",),
-                    "cursor": ("cursor", "cursor-agent"), "vscode": ("code", "code-insiders")}
+                    "cursor": ("cursor", "cursor-agent"), "vscode": ("code", "code-insiders"),
+                    "opencode": ("opencode",)}
         selected = []
         for agent, names in binaries.items():
             if any(shutil.which(name) for name in names):
@@ -277,10 +280,10 @@ def select_agents(target, progress=None):
                 if progress:
                     progress.status("检测到", LABELS[agent], "32")
             elif progress:
-                hint = f"；可显式选择 {agent} 配置图形界面客户端" if agent in {"cursor", "vscode"} else ""
+                hint = f"；可显式选择 {agent} 配置图形界面客户端" if agent in {"cursor", "vscode", "opencode"} else ""
                 progress.status("跳过", f"{LABELS[agent]}：未检测到 CLI{hint}", "33")
         if not selected:
-            raise ValueError("未检测到 Agent CLI；图形界面用户请显式使用 cursor 或 vscode。")
+            raise ValueError("未检测到 Agent CLI；图形界面用户请显式使用 cursor、vscode 或 opencode。")
     else:
         selected = list(AGENTS) if target == "all" else [target]
     for agent in selected:
@@ -290,15 +293,16 @@ def select_agents(target, progress=None):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="配置 Codex、Claude Code、Cursor、VS Code Copilot 的本地会话归档。只需 Python 3.9+ 与相应客户端。")
+    parser = argparse.ArgumentParser(description="配置 Codex、Claude Code、Cursor、VS Code Copilot、OpenCode 的本地会话归档。只需 Python 3.9+ 与相应客户端。")
     parser.add_argument("agent", nargs="?", default="auto", choices=["auto", *AGENTS, "copilot", "all"])
+    parser.add_argument("--project", help="目标 Git 项目目录；安装后的入口默认使用所属项目")
     parser.add_argument("--mode", choices=sorted(SUPPORTED_MODES), help="指定本地归档等级；省略时保留原设置，首次默认 messages")
     args = parser.parse_args(argv)
     target = "vscode" if args.agent == "copilot" else args.agent
-    root = project_root(BUNDLE_ROOT)
     progress = Progress()
-    progress.header(root, target)
     try:
+        root = resolve_project(BUNDLE_ROOT, args.project)
+        progress.header(root, target)
         progress.section("环境与配置")
         agents = progress.step("检测 Agent 客户端", select_agents, target, progress)
         progress.info("将配置：" + "、".join(LABELS[agent] for agent in agents))
@@ -310,7 +314,8 @@ def main(argv=None):
             progress.step("检查 Claude Code 项目设置", claude_project_config, root)
         progress.step("安装跨分支运行文件", install_runtime, BUNDLE_ROOT, root)
         installers = {"codex": install_codex, "claude": install_claude,
-                      "cursor": install_cursor_hooks, "vscode": install_copilot_hooks}
+                      "cursor": install_cursor_hooks, "vscode": install_copilot_hooks,
+                      "opencode": install_opencode_hooks}
         for number, agent in enumerate(agents, 1):
             progress.section(f"{LABELS[agent]}（{number}/{len(agents)}）")
             if agent in {"codex", "claude"}:

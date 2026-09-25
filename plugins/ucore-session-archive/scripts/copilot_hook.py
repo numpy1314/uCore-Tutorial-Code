@@ -36,7 +36,7 @@ class TranscriptError(ValueError):
 
 
 def warn(message):
-    print(f"[uCore VS Code Copilot] {message}", file=sys.stderr)
+    print(f"[Course VS Code Copilot] {message}", file=sys.stderr)
 
 
 def timestamp_ns(value):

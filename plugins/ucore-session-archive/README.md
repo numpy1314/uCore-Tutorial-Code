@@ -1,31 +1,23 @@
-# uCore Session Archive
+# Course Session Archive
 
-本插件提供 Codex、Claude Code、Cursor 和 VS Code GitHub Copilot 的本地 JSONL
-会话归档。配置和运行使用 Python 标准库。
+Codex、Claude Code、Cursor、VS Code GitHub Copilot 和 OpenCode 的项目会话归档插件。
+插件名称为 `ucore-session-archive`，本地插件源为 `course-tool`。
 
-首次在 main 分支的项目根目录运行：
+在工具仓库根目录运行，显式选择目标 Git 项目：
 
-```bash
-./scripts/setup-agent-plugins.sh codex  # 或 claude / cursor / vscode / auto / all
+```sh
+./scripts/setup-agent-plugins.sh auto --project /path/to/my-lab
+./scripts/setup-agent-plugins.sh cursor --project /path/to/my-lab --mode full
+./scripts/setup-agent-plugins.sh opencode --project /path/to/my-lab
 ```
 
-安装后切换实验分支仍会归档，任意分支可使用 `git agent-plugins` 再次配置。
-已安装的程序和插件源位于本地 `.ai/course-tools/`。
+也可使用统一入口 `python3 course.py --project /path/to/my-lab --agent codex`。
+安装后，在目标项目中通过 `git agent-plugins <agent>` 再次配置。
 
-归档位置为 `.ai/agent-sessions/<agent>/<UTC日期时间>_<session-id>.jsonl`。
-目录中的全部内容可通过普通 `git add` 与实验代码一起提交。
-每个 Agent 使用自己目录中的 `session-archive.json`，支持 `enabled` 和
-`messages` / `tool-calls` / `full` 三档 mode。
+运行程序安装到目标项目 `.ai/course-tools/`，会话保存到
+`.ai/agent-sessions/<agent>/<UTC日期时间>_<session-id>.jsonl`。
+归档文件与 `.state/` 索引可以随项目代码提交。
+各 Agent 的 `session-archive.json` 支持独立的 `enabled` 开关与
+`messages`、`tool-calls`、`full` 三种模式。
 
-完整说明和 JSONL 格式见 [Agent 会话本地归档](../../docs/agent-session-archive.md)。
-
-实现文件：
-
-- `scripts/archive_session.py`：项目配置、归档路径、Codex/Claude transcript 过滤和 JSONL 写入。
-- `scripts/archive_storage.py`：Cursor/Copilot 的 JSONL 存储和内容无关的 SQLite 排序索引。
-- `scripts/cursor_hook.py`：Cursor 项目事件适配器及 hooks 安装。
-- `scripts/copilot_hook.py`：Copilot v1 transcript 适配器及保留 JSONC 注释的 hooks 安装。
-- `scripts/setup_agents.py`：四种 Agent 的安装与独立项目配置。
-
-Codex / Claude Code 的 `hooks/hooks.json` 由插件加载。Cursor / Copilot 使用独立的
-项目 hooks，并在安装时复制所需运行脚本，后续无需依赖当前分支的插件源码。
+完整说明见 [AI 会话归档](../../docs/agent-session-archive.md)。

@@ -26,7 +26,7 @@ COMMAND = 'python3 ".cursor/ucore-hooks/cursor_hook.py"'
 
 
 def warn(message):
-    print(f"[uCore Cursor] {message}", file=sys.stderr)
+    print(f"[Course Cursor] {message}", file=sys.stderr)
 
 
 def handle(payload, project_root=None):

@@ -53,7 +53,7 @@ class CursorHookTests(unittest.TestCase):
 
     def trace(self, repeat=False):
         sequence = [
-            ("beforeSubmitPrompt", {"prompt": "USER_MESSAGE", "attachments": [{"type": "file", "file_path": "os/main.c"}]}),
+            ("beforeSubmitPrompt", {"prompt": "USER_MESSAGE", "attachments": [{"type": "file", "file_path": "os/src/main.rs"}]}),
             ("afterAgentThought", {"text": "THINKING_DETAIL", "duration_ms": 30}),
             ("preToolUse", {"tool_name": "Shell", "tool_use_id": "tool-1", "tool_input": {"command": "printf COMMAND_ONLY"}, "agent_message": "INTERMEDIATE_DETAIL"}),
             ("postToolUse", {"tool_name": "Shell", "tool_use_id": "tool-1", "tool_input": {"command": "printf COMMAND_ONLY"}, "tool_output": json.dumps({"stdout": "OUTPUT_DETAIL\nnext line", "stderr": "", "exitCode": 0}), "duration": 2}),
@@ -71,7 +71,7 @@ class CursorHookTests(unittest.TestCase):
         text = archive_text(self.archive)
         self.assertIn("USER_MESSAGE", text)
         self.assertIn("FINAL_REPLY", text)
-        self.assertIn("os/main.c", text)
+        self.assertIn("os/src/main.rs", text)
         self.assertIn("```rust\nfn main() {}", text)
         for secret in ("THINKING_DETAIL", "INTERMEDIATE_DETAIL", "COMMAND_ONLY", "OUTPUT_DETAIL"):
             for path in (self.root / ".ai/agent-sessions").rglob("*"):

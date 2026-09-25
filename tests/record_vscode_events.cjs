@@ -13,7 +13,7 @@ const listen = name => callback => {
   return { dispose() {} };
 };
 const uri = file => ({ scheme: 'file', fsPath: file, toString: () => file });
-const source = fs.existsSync(path.join(root, 'os/main.c')) ? 'os/main.c' : 'README.md';
+const source = process.argv[4] || (fs.existsSync(path.join(root, 'os/main.c')) ? 'os/main.c' : 'README.md');
 const document = { uri: uri(path.join(root, source)), languageId: source.endsWith('.c') ? 'c' : 'markdown' };
 const vscode = {
   workspace: {

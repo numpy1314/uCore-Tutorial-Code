@@ -41,14 +41,14 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 [Windows.Forms.Application]::EnableVisualStyles()
 $form = [Windows.Forms.Form]::new()
-$form.Text = 'uCore 实时日志 — ' + (Split-Path -Leaf $project)
+$form.Text = '课程实时日志 — ' + (Split-Path -Leaf $project)
 $form.Size = [Drawing.Size]::new(1120,760)
 $form.MinimumSize = [Drawing.Size]::new(850,560)
 $form.StartPosition = 'CenterScreen'
 $form.Font = [Drawing.Font]::new('Microsoft YaHei UI',10)
 $form.BackColor = [Drawing.Color]::White
 $header = [Windows.Forms.Label]::new()
-$header.Text = "uCore 实验 · 实时操作记录`n$project"
+$header.Text = "课程实验 · 实时操作记录`n$project"
 $header.Dock = 'Top'; $header.Height = 68; $header.Padding = [Windows.Forms.Padding]::new(12)
 $header.BackColor = [Drawing.Color]::FromArgb(233,241,253)
 $footer = [Windows.Forms.Label]::new()

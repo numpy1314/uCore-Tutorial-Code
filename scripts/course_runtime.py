@@ -1,4 +1,4 @@
-"""Install branch-independent course tools in the local checkout."""
+"""Install course tools into an explicitly selected Git checkout."""
 
 import os
 import shlex
@@ -15,6 +15,8 @@ LOCAL_PATHS = (
     '.claude/settings.json', '.claude/settings.local.json', '.claude/session-archive.json',
     '.cursor/hooks.json', '.cursor/session-archive.json', '.cursor/ucore-hooks/',
     '.vscode/session-archive.json', '.vscode/ucore-hooks/',
+    '.opencode/session-archive.json', '.opencode/ucore-hooks/',
+    '.opencode/plugins/ucore-session-archive.js',
     '.github/hooks/ucore-session-archive.json',
 )
 BUNDLE_FILES = ('course.py', '.course-monitor', 'plugins/ucore-session-archive',
@@ -26,6 +28,27 @@ def project_root(bundle):
     if bundle.name == 'course-tools' and bundle.parent.name == '.ai':
         return bundle.parent.parent
     return bundle
+
+
+def resolve_project(bundle, project=None):
+    """Preserve bundled installs; allow an explicit external project or caller checkout."""
+    bundle = Path(bundle).resolve()
+    if project is None:
+        owner = project_root(bundle)
+        if owner != bundle:
+            return owner
+        # Course repositories distribute this entry on main. Keep their existing
+        # no-argument install working even when invoked outside the checkout.
+        source = subprocess.run(['git', '-C', str(bundle), 'rev-parse', '--show-toplevel'],
+                                text=True, encoding='utf-8', capture_output=True)
+        if source.returncode == 0 and Path(source.stdout.strip()).resolve() == bundle:
+            return bundle
+    location = Path(project).expanduser().resolve() if project is not None else Path.cwd()
+    result = subprocess.run(['git', '-C', str(location), 'rev-parse', '--show-toplevel'],
+                            text=True, encoding='utf-8', capture_output=True)
+    if result.returncode:
+        raise ValueError('请用 --project 指定已有的 Git 项目目录。')
+    return Path(result.stdout.strip()).resolve()
 
 
 def git(root, *args):
@@ -52,20 +75,45 @@ def write_file(path, content, mode=0o600):
         Path(temporary).unlink(missing_ok=True)
 
 
+def record_ignore_updates(root):
+    """Prepare branch-local record rules while preserving existing ignore entries."""
+    files = [(root / '.gitignore', '/.ai/')]
+    nested = root / '.ai/.gitignore'
+    if nested.exists() or nested.is_symlink():
+        files.append((nested, ''))
+    updates = []
+    for path, prefix in files:
+        ordinary_path(root, path)
+        lines = ['# >>> course-tool records']
+        if prefix:
+            lines += ['!/.ai/', '!/.ai/.gitignore']
+        for name in ('agent-sessions', 'events', 'submissions'):
+            lines += ['!' + prefix + name + '/', '!' + prefix + name + '/**']
+        lines += ['# <<< course-tool records']
+        block = '\n'.join(lines) + '\n'
+        current = path.read_text(encoding='utf-8') if path.exists() else ''
+        base = current.replace(block, '').rstrip('\n')
+        text = (base + '\n\n' if base else '') + block
+        if text != current:
+            updates.append((path, text.encode('utf-8'), path.stat().st_mode & 0o777 if path.exists() else 0o644))
+    return updates
+
+
 def install_runtime(bundle, root=None):
     """Copy only executable tooling; preserve the installed project policy."""
     bundle = Path(bundle).resolve()
-    root = project_root(bundle) if root is None else Path(root).resolve()
+    root = resolve_project(bundle) if root is None else Path(root).resolve()
     if Path(git(root, 'rev-parse', '--show-toplevel')).resolve() != root:
         raise ValueError('请在实验仓库根目录安装记录工具。')
     runtime = root / RUNTIME_PATH
     ordinary_path(root, runtime)
+    ignore_updates = record_ignore_updates(root)
     if bundle != runtime:
         copies = []
         for name in BUNDLE_FILES:
             source = bundle / name
             if not source.exists():
-                raise ValueError('记录工具文件缺失，请从 main 分支安装：' + name)
+                raise ValueError('记录工具文件缺失，请从完整的 course-tool 仓库安装：' + name)
             for path in sorted(source.rglob('*')) if source.is_dir() else [source]:
                 if path.is_symlink():
                     raise ValueError('记录工具源文件不能是符号链接：' + str(path))
@@ -80,7 +128,7 @@ def install_runtime(bundle, root=None):
         for source, destination in copies:
             write_file(destination, source.read_bytes(), 0o700 if source.stat().st_mode & 0o111 else 0o600)
     if not (runtime / 'plugins/ucore-session-archive/scripts/setup_agents.py').is_file():
-        raise ValueError('归档插件运行文件不完整，请从 main 分支重新安装。')
+        raise ValueError('归档插件运行文件不完整，请从 course-tool 仓库重新安装。')
     exclude = Path(git(root, 'rev-parse', '--git-path', 'info/exclude'))
     if not exclude.is_absolute():
         exclude = root / exclude
@@ -101,6 +149,8 @@ def install_runtime(bundle, root=None):
         text += '\n'.join(missing) + '\n'
     if text != current:
         write_file(exclude, text.encode('utf-8'))
+    for path, content, mode in ignore_updates:
+        write_file(path, content, mode)
     aliases = {
         'course': [sys.executable, str(RUNTIME_PATH / 'course.py')],
         'agent-plugins': [sys.executable, str(RUNTIME_PATH / 'plugins/ucore-session-archive/scripts/setup_agents.py')],

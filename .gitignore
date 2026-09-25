@@ -65,3 +65,22 @@ __pycache__/
 !/.vscode/session-archive.example.json
 !/.vscode/copilot-hooks.example.json
 /.github/hooks/ucore-session-archive.json
+
+# Local recording runtime and client configuration.
+/.opencode/session-archive.json
+/.opencode/ucore-hooks/
+/.opencode/plugins/ucore-session-archive.js
+!/.opencode/
+/.opencode/*
+!/.opencode/session-archive.example.json
+
+# >>> course-tool records
+!/.ai/
+!/.ai/.gitignore
+!/.ai/agent-sessions/
+!/.ai/agent-sessions/**
+!/.ai/events/
+!/.ai/events/**
+!/.ai/submissions/
+!/.ai/submissions/**
+# <<< course-tool records

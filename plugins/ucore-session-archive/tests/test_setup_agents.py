@@ -81,8 +81,13 @@ class SetupPolicyTests(unittest.TestCase):
         with mock.patch.object(setup.shutil, 'which', side_effect=lambda name: '/bin/' + name if name == 'cursor-agent' else None):
             self.assertEqual(['cursor'], setup.select_agents('auto'))
             self.assertEqual(['vscode'], setup.select_agents('vscode'))
+            self.assertEqual(['opencode'], setup.select_agents('opencode'))
             with self.assertRaisesRegex(ValueError, 'CLI'):
                 setup.select_agents('all')
+        with mock.patch.object(setup.shutil, 'which', side_effect=lambda name: '/bin/opencode' if name == 'opencode' else None):
+            self.assertEqual(['opencode'], setup.select_agents('auto'))
+        with mock.patch.object(setup.shutil, 'which', return_value='/bin/client'):
+            self.assertIn('opencode', setup.select_agents('all'))
 
     def test_codex_installs_only_local_archive_and_disables_it_globally(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -133,21 +138,15 @@ class SetupCommandTests(unittest.TestCase):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         self.root = Path(temporary.name) / 'project with spaces'
-        shutil.copytree(PLUGIN, self.root / 'plugins' / PLUGIN.name)
-        (self.root / 'scripts').mkdir()
-        shutil.copy2(REPOSITORY / 'scripts/setup-agent-plugins.sh', self.root / 'scripts/setup-agent-plugins.sh')
-        shutil.copy2(REPOSITORY / 'scripts/course_runtime.py', self.root / 'scripts/course_runtime.py')
-        shutil.copy2(REPOSITORY / 'course.py', self.root / 'course.py')
-        for directory in ('.course-monitor', '.agents', '.claude-plugin'):
-            shutil.copytree(REPOSITORY / directory, self.root / directory)
+        self.root.mkdir(parents=True)
         subprocess.run(['git', 'init', '-q', str(self.root)], check=True)
 
     def run_setup(self, *args):
-        return subprocess.run(['bash', str(self.root / 'scripts/setup-agent-plugins.sh'), *args],
+        return subprocess.run(['bash', str(REPOSITORY / 'scripts/setup-agent-plugins.sh'), '--project', str(self.root), *args],
                               cwd=self.root, text=True, capture_output=True, timeout=15)
 
-    def test_cursor_and_vscode_set_up_independently_and_preserve_policy(self):
-        for agent, directory in (('cursor', '.cursor'), ('copilot', '.vscode')):
+    def test_native_clients_set_up_independently_and_preserve_policy(self):
+        for agent, directory in (('cursor', '.cursor'), ('copilot', '.vscode'), ('opencode', '.opencode')):
             result = self.run_setup(agent)
             self.assertEqual(0, result.returncode, result.stderr)
             config_path = self.root / directory / 'session-archive.json'

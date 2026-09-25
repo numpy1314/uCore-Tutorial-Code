@@ -1,6 +1,8 @@
 {
   "name": "ucore-tutorial-code",
-  "owner": { "name": "uCore Tutorial" },
+  "owner": {
+    "name": "Course Tool"
+  },
   "plugins": [
     {
       "name": "ucore-session-archive",

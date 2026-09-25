@@ -1,106 +1,102 @@
-# 实验过程记录
+# 课程过程记录
 
-在 `main` 分支安装一次，之后在同一仓库切换到 `ch1`–`ch8` 都会继续记录。
-课程工具、VS Code 插件和配置示例只由 `main` 分发，章节分支保持原有实验代码结构。
+本仓库在 `main` 分发同步自 [leeehh/course-tool](https://github.com/leeehh/course-tool) 的工具，版本 `6d68289f601a76b51f33efed3ad13198ae57a579`。
+在本仓库运行 `python3 course.py` 仍会安装到本仓库；也可用 `--project` 指定其他 Git 项目。
+安装后的 `git course` 和 `git agent-plugins` 使用 `.ai/course-tools/`，可跨全部章节分支运行。
+升级时先在 `main` 拉取更新，再运行 `python3 course.py`（或指定 `--agent`）；原记录和配置会保留。
+插件仍使用原有 `ucore-session-archive@ucore-tutorial-code` 标识，避免已有配置另起一套插件。
 
-## 安装和开始实验
+`course-tool` 为任意已有 Git 项目提供操作记录。工具仓库负责分发，目标项目保存运行副本、
+配置和课堂记录，不需要把工具源文件合并进实验代码。
 
-需要 Python 3.10+、Bash、Git 和 VS Code 1.93+。Windows 建议使用 PowerShell 7；
-AI 归档另需对应的 Agent 客户端。
+## 安装与启动
 
-```sh
-git switch main
-python3 course.py
-```
-
-默认启动（`python3 course.py` 或 `python3 course.py start`）先执行
-`./scripts/setup-agent-plugins.sh auto`，自动检测并初始化 AI 会话归档。初始化成功后，
-再安装随仓库提供的 VS Code 插件，配置提交前导出，打开实验工作区与实时日志。
-通过 `--agent` 选择启动时的归档客户端，默认 `auto`。支持 `auto`、`codex`、
-`claude`、`cursor`、`vscode`、`copilot`（vscode 的别名）和 `all`：
+需要 Python 3.10+、Git 和 Bash。打开工作区及安装扩展需要 VS Code 1.93+ 和 `code` 命令。
+在远程开发、WSL 或容器中，应在目标项目所在环境执行命令。
 
 ```sh
-python3 course.py --agent codex
-# 也可与显式 start 及已有选项一起使用：
-python3 course.py start --agent claude --skip-extension
+python3 /path/to/course-tool/course.py --project /path/to/my-lab
+python3 /path/to/course-tool/course.py start --project /path/to/my-lab --agent codex --skip-extension
 ```
 
-`--agent codex` 选择 Codex 归档；位置参数 `codex` 用于发起一次课程 Codex 调用。
+默认动作是 `start`：先调用 `scripts/setup-agent-plugins.sh`，使用 `--agent` 选择的客户端
+初始化会话归档，再安装课程扩展与提交 Hook，打开 `.ai/ide/course.code-workspace` 及实时日志。
+`--skip-extension` 只跳过扩展安装；`start` 仍会打开 VS Code。
 
-Windows 打开独立日志窗口；Linux/macOS 在启动入口的终端显示日志。
-在 VS Code 中信任本实验工作区，保持该窗口打开，然后在另一个终端切换章节：
+`--agent` 默认 `auto`，支持 `codex`、`claude`、`cursor`、`vscode`、`copilot`、`opencode`、`all`。
+`--agent codex` 用于选择归档客户端；位置参数 `codex` 用于发起一次课程 Codex 调用。
+
+只安装记录工具、不打开编辑器时使用：
 
 ```sh
-git switch ch1
-# 如果尚未创建本地章节分支，git switch 会使用 origin/ch1 创建跟踪分支。
-git course status
+python3 /path/to/course-tool/course.py install --project /path/to/my-lab --skip-extension
 ```
 
-在 `main` 可以打开、编辑并保存 `README.md` 验证采集；在章节分支使用
-`os/main.c`。新建 VS Code 集成终端并执行 `git status`，可观察命令开始、结束
-及退出码。命令采集需要终端支持 Shell Integration。
-
-启动时已按 `--agent` 配置 AI 会话归档；需要单独更新归档配置时，在 `main` 运行：
+`install` 独立安装课程工具；AI 客户端可通过 `start` 或下面的脚本配置：
 
 ```sh
-./scripts/setup-agent-plugins.sh auto
-# 也可指定 codex、claude、cursor、vscode 或 all。
+/path/to/course-tool/scripts/setup-agent-plugins.sh cursor --project /path/to/my-lab --mode full
 ```
 
-安装后可以在任意章节分支运行 `git agent-plugins auto`。
-从项目根目录开启普通 Codex、Claude Code 或 Cursor 会话；VS Code Copilot 使用
-`.ai/ide/course.code-workspace`。详细设置见 [AI 会话归档说明](agent-session-archive.md)。
+`--project` 可以指定项目根目录或子目录。从项目内运行外部工具时，没有随仓库分发工具副本时，省略该参数会识别当前
+Git 项目；已安装的 `git course` 始终默认使用其运行副本所属的项目。在工具源码目录内执行
+时需显式选择项目，避免把工具仓库当作实验。
 
-## 任意分支上的日常命令
+## 日常命令
 
-以下 Git 入口在安装后可用，执行时自动定位仓库根目录：
+以下命令在目标项目中执行：
 
 | 命令 | 用途 |
 | --- | --- |
-| `git course` | 自动初始化 AI 归档，再打开实验工作区和实时日志 |
-| `git course --agent codex` | 初始化 Codex 归档，再打开实验工作区和实时日志 |
+| `git course` | 自动配置 AI 归档并打开课程工作区、实时日志 |
+| `git course --agent cursor` | 启动并选择 Cursor 归档 |
+| `git course status` | 检查记录开关、项目路径、日志与 Hook |
 | `git course logs` | 查看已有日志并持续显示新事件 |
-| `git course status` | 查看记录开关、日志位置、文件数量和提交 Hook |
-| `git course install` | 重新安装 VS Code 插件及提交 Hook |
-| `git course install --skip-extension` | 只初始化本地工具与提交 Hook |
-| `git course codex` | 发起一次只读 Codex 调用，记录问题和实际操作事件 |
-| `git course codex --allow-edits` | 发起允许修改实验文件的 Codex 调用 |
-| `git course export` | 手动导出本地事件快照 |
-| `git agent-plugins auto` | 检测并配置 AI 会话归档 |
-| `git agent-plugins cursor --mode full` | 调整指定客户端的归档模式 |
+| `git course install --skip-extension` | 更新当前分支的记录规则和 Hook |
+| `git course codex` | 发起一次只读 Codex 调用并记录问题、操作事件 |
+| `git course codex --allow-edits` | 允许这次 Codex 调用修改项目文件 |
+| `git course export` | 手动生成事件快照，不会暂存或提交 |
+| `git agent-plugins codex` | 单独更新指定 Agent 的配置 |
 
-`main` 中的 `python3 course.py` 是统一启动入口；`./scripts/setup-agent-plugins.sh`
-也可单独用于归档配置。`install` 用于独立安装课程工具，容器初始化仍可使用它。
-更新工具时回到 `main` 获取新版本，再执行安装命令；已安装的记录开关、归档模式和日志
-会被保留。重新克隆仓库或换一个工作目录后，需要在那个目录重新安装。
+外部源码入口同样支持 `status`、`logs`、`codex`、`export`，均通过 `--project` 访问目标
+项目安装的运行副本。尚未安装时会提示先安装。
 
-## 课程 Codex 操作记录
+## 记录内容
+
+在受信任的课程工作区打开、修改并保存一个项目文件，日志会显示文件打开、编辑、保存等
+操作。VS Code 集成终端支持 Shell Integration 时还可记录命令开始、结束、退出码和耗时；
+Tasks 接口记录任务开始与结束。`.ai/`、`.git/`、构建缓存和凭据文件不作为文件操作采集目标。
+
+课程事件只保存允许的元数据，配置默认不保存代码正文和终端输出。AI 操作来自显式适配器，
+不根据文件改动猜测是否由 AI 生成。Agent 会话正文由独立归档插件按 mode 保存，详见
+[会话归档说明](agent-session-archive.md)。
+
+其他客户端可将一个 JSON 事件写到已安装的适配器标准输入：
 
 ```sh
-git course codex
+printf '%s\n' '{"type":"ai_prompt","prompt":"解释项目结构","tool":"my-client"}' | \
+  python3 /path/to/my-lab/.ai/course-tools/.course-monitor/ai-ingest.py
 ```
 
-输入实验问题，例如“请阅读 os/main.c，简要说明启动流程”。每次运行提交一个问题，
-记录 Prompt、会话边界以及实际产生的文件操作、命令结果。默认只读，`--allow-edits`
-允许本次调用修改工作区文件。
+同目录还提供 Shell、PowerShell 和 Node.js 包装入口。这些记录脚本应从目标项目的运行副本
+调用；源码目录中的脚本不代替目标项目安装。
 
-这条操作记录入口使用临时会话模式。需要保存完整问答时，使用已经配置归档插件的
-普通 Agent 会话。操作事件与会话归档分别保存在下列目录。
+## 保存与提交
 
-## 保存位置与提交
+所有下列路径都相对于目标项目根目录：
 
-| 目录 | 内容 |
+| 路径 | 内容 |
 | --- | --- |
-| `.ai/events/` | VS Code 和课程 AI 入口生成的本地 JSONL 事件 |
-| `.ai/agent-sessions/<agent>/` | 带 UTC 日期时间与会话 ID 的 JSONL 会话归档 |
-| `.ai/submissions/` | 提交前生成的增量事件快照 |
-| `.ai/ide/` | 实验工作区文件及日志查看器状态 |
-| `.ai/course-tools/` | 安装后的本地运行文件和课程配置 |
+| `.ai/events/` | VS Code 和课程 AI 入口生成的 JSONL 事件 |
+| `.ai/agent-sessions/<agent>/` | JSONL 会话归档与 `.state/` 索引 |
+| `.ai/submissions/` | 增量事件快照 |
+| `.ai/ide/` | 工作区文件和日志查看状态 |
+| `.ai/course-tools/` | 本地运行文件与配置 |
 
-关闭日志窗口后文件仍然保留。请同学们不要改动或删除过程记录，提交时会检查这些记录
-作为考核参考。`main` 和 `ch1`–`ch8` 都允许跟踪 `.ai/agent-sessions/`、`.ai/events/`
-和 `.ai/submissions/` 的全部内容。使用普通 `git add` 将记录与代码一起暂存；
-正常 `git commit` 还会导出并暂存课程事件快照，事件 ID 按当前暂存区去重。
+前三个目录的全部内容可以通过普通 `git add` 暂存。安装器将放行规则写到当前分支的
+`.gitignore`；如存在 `.ai/.gitignore`，也会追加相应规则。已有规则会保留。
+工具运行文件、IDE 状态、Agent 项目设置通过 Git 的 `info/exclude` 保持本地忽略。
+旧版对课程记录的本地排除项会被清理。
 
 ```sh
 git add .
@@ -108,52 +104,28 @@ git commit -m "docs: record lab work"
 git push origin HEAD
 ```
 
-切换章节前先提交当前章节的记录。工具运行文件、IDE 状态和 Agent 本地配置仍被忽略。
-旧安装升级时，在更新后的 `main` 运行 `python3 course.py install --skip-extension`，
-安装器会清理 `.git/info/exclude` 中旧的记录排除规则；章节分支也需要更新 `.gitignore`。
+提交 Hook 会额外导出并暂存尚未提交的课程事件，按暂存区中的事件 ID 去重。
+反复手动 `export` 而未暂存上次快照时，同一事件可能再次导出。
+请保留完整课堂记录，便于回顾实验过程。
 
-`git course export` 只生成快照，不会暂存或提交。反复手动导出而未暂存上次快照时，
-同一事件可能再次导出；生成的快照也可以使用普通 `git add` 暂存。
+## 分支、更新与配置保留
 
-## 配置与记录范围
+工具没有固定分支列表。安装后的运行副本和 Git 入口可以继续在其他分支使用。
+切换前先提交当前分支的记录；在尚未包含放行规则的分支执行 `git course install --skip-extension`
+或正常 `git course`，然后提交新增的 `.gitignore` 规则。
 
-安装后的课程开关位于 `.ai/course-tools/.course-monitor/config.json`。
-将 `enabled` 设为 `false` 可暂停记录，恢复时设为 `true`，并在 VS Code 执行
-`Developer: Reload Window`。插件也提供状态栏暂停按钮。
+更新工具时，从新版源码执行带 `--project` 的安装命令。已有记录、课程配置和 Agent 归档
+开关与模式都会保留。每个 clone / worktree 使用自己的 `.ai/course-tools/`，需要各自安装。
 
-文件事件覆盖打开、关闭、编辑、保存、新建、重命名和删除；短时间内的连续编辑会合并。
-终端与 Tasks 记录命令或任务边界、退出码和耗时。课程事件保存操作元数据，普通文件事件
-不能单独判断由人还是 AI 操作；明确的 AI 归因来自课程入口或显式事件适配器。
+课程配置位于 `.ai/course-tools/.course-monitor/config.json`。设置 `enabled: false`
+会暂停课程操作记录，修改后重载 VS Code；Agent 归档的开关单独设置。
+安装器保留项目原有 `.vscode/settings.json`，课程专用设置写入课程工作区。
+存在其他 `core.hooksPath` 或 pre-commit Hook 时，安装器会保留并提示先整合。
 
-自定义适配器可以向下面的入口传入一行 JSON，类型为 `ai_prompt`、`ai_file_operation`
-或 `ai_command_result`，并给出 `tool`：
+## 检查问题
 
-```sh
-python3 .ai/course-tools/.course-monitor/ai-ingest.py
-```
-
-也提供对应的 `.sh`、`.ps1` 和 `.cjs` 入口。事件只接受项目内的路径与规定字段。
-
-## 容器与故障排查
-
-从 `main` 创建 Dev Container。创建时初始化运行文件，连接时通过 `git course install`
-安装 VS Code 插件；之后切换章节并重新连接，也使用已安装的入口。
-已有实验容器可执行：
-
-```sh
-python3 course.py install --skip-extension
-```
-
-然后在连接该容器的 VS Code 中，通过“Extensions: Install from VSIX...”安装
-`.ai/course-tools/.course-monitor/rewind-ide-0.3.1.vsix`。
-容器提供 Python 3、RISC-V GCC、GDB 和 QEMU，编辑器使用 C/C++ 扩展。
-uCore 的内核源码位于 `os/`，构建命令在仓库根目录执行；用户程序和测试环境仍按章节说明准备。
-
-- 找不到 `git course`：在 `main` 运行一次安装命令。
-- 文件事件缺失：确认工作区已信任、课程插件已启用、本地课程配置的 `enabled` 为 `true`，
-  重载窗口后打开并保存一个实验文件。`.ai/` 中的文件不用于采集测试。
-- 终端事件缺失：使用 VS Code 内新建的终端，确认 Shell Integration 已启用。
-- AI 会话缺失：核对对应 Agent 的配置，并在完成一轮问答后查看归档目录。
-- 已有 Git Hook：安装器会保留原有检查并提示整合，避免覆盖已有提交流程。
-
-迁移来源、功能清单与验证命令见 [功能说明](course-monitor-report.md)。
+- 找不到 `git course`：对当前 checkout 执行一次外部安装命令。
+- 文件事件缺失：确认工作区受信任、扩展已启用、课程配置的 `enabled` 为 `true`。
+- 终端事件缺失：新建集成终端并确认 Shell Integration 已启用。
+- AI 会话缺失：检查对应 Agent 配置和 hooks，并完成一轮问答。
+- 记录没有出现在 Git 中：在当前分支重装放行规则，用 `git check-ignore -v <文件>` 查看生效规则。

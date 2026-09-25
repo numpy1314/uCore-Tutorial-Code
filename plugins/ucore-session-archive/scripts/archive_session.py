@@ -21,6 +21,7 @@ CONFIG_RELATIVE_PATHS = {
     "claude-code": Path(".claude") / "session-archive.json",
     "cursor": Path(".cursor") / "session-archive.json",
     "vscode-copilot": Path(".vscode") / "session-archive.json",
+    "opencode": Path(".opencode") / "session-archive.json",
 }
 MODE_MESSAGES = "messages"
 MODE_TOOL_CALLS = "tool-calls"

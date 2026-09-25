@@ -8,7 +8,7 @@ def project_root():
     bundle = pathlib.Path(__file__).resolve().parent.parent
     if bundle.name == 'course-tools' and bundle.parent.name == '.ai':
         return bundle.parent.parent
-    return bundle
+    raise RuntimeError('请先用 course.py install --project <项目目录> 安装，再调用项目中 .ai/course-tools/ 下的记录脚本。')
 
 TYPES = set('session_start session_end file_open file_close file_save file_edit file_create file_delete file_rename terminal_open terminal_close command_start command_end task_start task_end shell_integration_unavailable ai_prompt ai_file_operation ai_command_result'.split())
 FIELDS = 'file old_file language command cwd exit_code duration_ms execution_id task terminal reason prompt tool operation confidence'.split()
