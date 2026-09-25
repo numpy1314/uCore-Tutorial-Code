@@ -1,0 +1,20 @@
+{
+  "name": "ucore-tutorial-code",
+  "interface": {
+    "displayName": "uCore Tutorial Code"
+  },
+  "plugins": [
+    {
+      "name": "ucore-session-archive",
+      "source": {
+        "source": "local",
+        "path": "./plugins/ucore-session-archive"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
