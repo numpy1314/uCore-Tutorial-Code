@@ -1,0 +1,13 @@
+{
+  "name": "ucore-tutorial-code",
+  "owner": {
+    "name": "Course Tool"
+  },
+  "plugins": [
+    {
+      "name": "ucore-session-archive",
+      "source": "./plugins/ucore-session-archive",
+      "description": "Save coding-agent conversations as local JSONL in the project."
+    }
+  ]
+}
