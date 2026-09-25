@@ -1,0 +1,17 @@
+{
+  "name": "ucore-session-archive",
+  "version": "0.1.0",
+  "description": "Save coding-agent conversations as local JSONL in the project.",
+  "author": {
+    "name": "uCore Tutorial"
+  },
+  "interface": {
+    "displayName": "uCore Session Archive",
+    "shortDescription": "Save agent conversations as local JSONL.",
+    "longDescription": "Project-local JSONL archives for Codex, Claude Code, Cursor, VS Code Copilot and OpenCode. Choose messages, tool-calls or full content.",
+    "developerName": "uCore Tutorial",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": "Show me where this project saves agent session archives."
+  }
+}
