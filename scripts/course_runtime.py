@@ -37,7 +37,7 @@ def resolve_project(bundle, project=None):
         owner = project_root(bundle)
         if owner != bundle:
             return owner
-        # Course repositories distribute this entry on main. Keep their existing
+        # Course repositories distribute this entry on each lab branch. Keep the
         # no-argument install working even when invoked outside the checkout.
         source = subprocess.run(['git', '-C', str(bundle), 'rev-parse', '--show-toplevel'],
                                 text=True, encoding='utf-8', capture_output=True)

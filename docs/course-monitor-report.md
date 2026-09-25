@@ -35,11 +35,11 @@ Cursor / Copilot 的运行脚本使用 `ucore-hooks` 目录，避免与 rCore �
 | 随代码提交 | main/ch1–ch8 放行 `.ai/agent-sessions/`、`.ai/events/` 和 `.ai/submissions/`，普通 `git add` 即可暂存 |
 | 开关与恢复 | 保留已有日志和模式；课程配置重载后生效，归档配置每次 hook 读取 |
 | 容器 | main 提供 Dev Container 初始化与连接后的插件安装入口 |
-| 跨分支使用 | main 安装一次，切换 ch1–ch8 后继续记录 |
+| 跨分支使用 | 任一实验分支安装一次，切换 ch1–ch8 后继续记录 |
 
-## 在 main 安装，所有实验分支使用
+## 任一实验分支安装，跨分支使用
 
-源码、配置示例和插件安装包仅放在 `main`。安装器将运行文件放到本地
+main 和各实验分支均提供源码、配置示例和插件安装包。安装器将运行文件放到本地
 `.ai/course-tools/`，建立 `git course` 和 `git agent-plugins` 入口，并设置稳定的提交 Hook。
 工具运行文件、IDE 状态及 Agent 配置的本地排除规则写入 Git 的 `info/exclude`，
 切换章节后仍然生效。重新安装会清理旧版本对课程记录的排除规则。
@@ -76,10 +76,10 @@ Agent CLI 的安装、课程 Codex 调用和归档事件通过模拟客户端与
 
 ## 2026-09-25 工具同步
 
-本仓库在 `main` 分发同步自 [leeehh/course-tool](https://github.com/leeehh/course-tool) 的工具，版本 `6d68289f601a76b51f33efed3ad13198ae57a579`。
+本仓库的 main 和各实验分支均提供同步自 [leeehh/course-tool](https://github.com/leeehh/course-tool) 的工具，版本 `6d68289f601a76b51f33efed3ad13198ae57a579`。
 在本仓库运行 `python3 course.py` 仍会安装到本仓库；也可用 `--project` 指定其他 Git 项目。
 安装后的 `git course` 和 `git agent-plugins` 使用 `.ai/course-tools/`，可跨全部章节分支运行。
-升级时先在 `main` 拉取更新，再运行 `python3 course.py`（或指定 `--agent`）；原记录和配置会保留。
+升级时在当前分支拉取更新，再运行 `python3 course.py`（或指定 `--agent`）；原记录和配置会保留。
 插件仍使用原有 `ucore-session-archive@ucore-tutorial-code` 标识，避免已有配置另起一套插件。
 
 本次同步增加 OpenCode 归档、外部项目安装及记录忽略规则迁移。保留实验源码、运行验收脚本和现有记录。
